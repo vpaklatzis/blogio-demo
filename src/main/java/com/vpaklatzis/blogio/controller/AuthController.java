@@ -1,5 +1,6 @@
 package com.vpaklatzis.blogio.controller;
 
+import com.vpaklatzis.blogio.DTO.SigninRequestDTO;
 import com.vpaklatzis.blogio.DTO.SignupRequestDTO;
 import com.vpaklatzis.blogio.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -22,9 +23,15 @@ public class AuthController {
     }
 
     @GetMapping("/verify/{token}")
+    @ResponseStatus(HttpStatus.OK)
     public String verifyAccount(@PathVariable String token) {
         authService.verifyAccountWithToken(token);
 
         return "Account verified successfully";
+    }
+
+    @GetMapping("/signin")
+    public void signin(@RequestBody SigninRequestDTO signinRequestDTO) {
+        authService.signIn(signinRequestDTO);
     }
 }
