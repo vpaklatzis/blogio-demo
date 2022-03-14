@@ -1,5 +1,6 @@
 package com.vpaklatzis.blogio.controller;
 
+import com.vpaklatzis.blogio.DTO.AuthenticationResponseDTO;
 import com.vpaklatzis.blogio.DTO.SigninRequestDTO;
 import com.vpaklatzis.blogio.DTO.SignupRequestDTO;
 import com.vpaklatzis.blogio.service.AuthService;
@@ -30,8 +31,9 @@ public class AuthController {
         return "Account verified successfully";
     }
 
-    @GetMapping("/signin")
-    public void signin(@RequestBody SigninRequestDTO signinRequestDTO) {
-        authService.signIn(signinRequestDTO);
+    @PostMapping("/signin")
+    @ResponseStatus(HttpStatus.OK)
+    public AuthenticationResponseDTO signin(@RequestBody SigninRequestDTO signinRequestDTO) {
+        return authService.signIn(signinRequestDTO);
     }
 }

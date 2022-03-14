@@ -1,5 +1,6 @@
 package com.vpaklatzis.blogio.service;
 
+import com.vpaklatzis.blogio.DTO.AuthenticationResponseDTO;
 import com.vpaklatzis.blogio.DTO.SigninRequestDTO;
 import com.vpaklatzis.blogio.DTO.SignupRequestDTO;
 import com.vpaklatzis.blogio.exception.BlogioException;
@@ -8,9 +9,12 @@ import com.vpaklatzis.blogio.model.UserEntity;
 import com.vpaklatzis.blogio.model.VerificationTokenEntity;
 import com.vpaklatzis.blogio.repository.UserRepository;
 import com.vpaklatzis.blogio.repository.VerificationTokenRepository;
+import com.vpaklatzis.blogio.security.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +32,7 @@ public class AuthService {
     private final VerificationTokenRepository verificationTokenRepository;
     private final MailService mailService;
     private final AuthenticationManager authenticationManager;
+    private final JwtProvider jwtProvider;
 
     @Transactional
     public void createUser(SignupRequestDTO signupRequestDTO) {
@@ -76,8 +81,14 @@ public class AuthService {
         userRepository.save(user);
     }
 
-    public void signIn(SigninRequestDTO signinRequestDTO) {
-        authenticationManager
+    public AuthenticationResponseDTO signIn(SigninRequestDTO signinRequestDTO) {
+        Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(signinRequestDTO.getUsername(), signinRequestDTO.getPassword()));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        String token = jwtProvider.generateToken(authentication);
+
+        return new AuthenticationResponseDTO(token, signinRequestDTO.getUsername());
     }
 }
