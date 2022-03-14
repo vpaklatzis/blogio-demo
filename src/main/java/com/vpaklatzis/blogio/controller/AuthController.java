@@ -20,4 +20,11 @@ public class AuthController {
 
         return "User created successfully";
     }
+
+    @GetMapping("/verify/{token}")
+    public String verifyAccount(@PathVariable String token) {
+        authService.verifyAccountWithToken(token);
+
+        return "Account verified successfully";
+    }
 }

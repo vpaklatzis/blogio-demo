@@ -1,18 +1,19 @@
 package com.vpaklatzis.blogio.service;
 
 import com.vpaklatzis.blogio.DTO.SignupRequestDTO;
+import com.vpaklatzis.blogio.exception.BlogioException;
 import com.vpaklatzis.blogio.model.NotificationEmail;
 import com.vpaklatzis.blogio.model.UserEntity;
 import com.vpaklatzis.blogio.model.VerificationTokenEntity;
 import com.vpaklatzis.blogio.repository.UserRepository;
 import com.vpaklatzis.blogio.repository.VerificationTokenRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -38,7 +39,7 @@ public class AuthService {
         String token = generateVerificationToken(user);
 
         mailService.sendMail(new NotificationEmail("Activate your account",
-                user.getEmail(), "Click on the link below to activate your account: " +
+                user.getEmail(), "Click on the following link to activate your account: " +
                 "http://localhost:8080/api/auth/verify/" + token));
     }
 
@@ -52,5 +53,22 @@ public class AuthService {
         verificationTokenRepository.save(verificationToken);
 
         return token;
+    }
+
+    public void verifyAccountWithToken(String token) {
+        Optional<VerificationTokenEntity> verificationToken = verificationTokenRepository.findByToken(token);
+
+        verificationToken.orElseThrow(() -> new BlogioException("Token is invalid"));
+
+        fetchUserAndEnableAccount(verificationToken.get());
+    }
+
+    @Transactional
+    public void fetchUserAndEnableAccount(VerificationTokenEntity verificationToken) {
+        String username = verificationToken.getUser().getUsername();
+
+        UserEntity user = userRepository.findByUsername(username).orElseThrow(() -> new BlogioException("User with name " + username + " not found"));
+        user.setEnabled(true);
+        userRepository.save(user);
     }
 }
