@@ -16,7 +16,6 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@AllArgsConstructor
 @NoArgsConstructor
 public class UserEntity {
 
