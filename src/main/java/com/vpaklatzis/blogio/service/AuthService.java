@@ -1,6 +1,7 @@
 package com.vpaklatzis.blogio.service;
 
 import com.vpaklatzis.blogio.DTO.SignupRequestDTO;
+import com.vpaklatzis.blogio.model.NotificationEmail;
 import com.vpaklatzis.blogio.model.UserEntity;
 import com.vpaklatzis.blogio.model.VerificationTokenEntity;
 import com.vpaklatzis.blogio.repository.UserRepository;
@@ -21,6 +22,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final VerificationTokenRepository verificationTokenRepository;
+    private final MailService mailService;
 
     @Transactional
     public void createUser(SignupRequestDTO signupRequestDTO) {
@@ -34,6 +36,10 @@ public class AuthService {
         userRepository.save(user);
 
         String token = generateVerificationToken(user);
+
+        mailService.sendMail(new NotificationEmail("Activate your account",
+                user.getEmail(), "Click on the link below to activate your account: " +
+                "http://localhost:8080/api/auth/verify/" + token));
     }
 
     private String generateVerificationToken(UserEntity user) {
