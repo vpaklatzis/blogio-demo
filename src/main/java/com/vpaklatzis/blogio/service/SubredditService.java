@@ -1,6 +1,8 @@
 package com.vpaklatzis.blogio.service;
 
 import com.vpaklatzis.blogio.DTO.SubredditDTO;
+import com.vpaklatzis.blogio.exception.BlogioException;
+import com.vpaklatzis.blogio.exception.SubredditNotFoundException;
 import com.vpaklatzis.blogio.model.SubredditEntity;
 import com.vpaklatzis.blogio.repository.SubredditRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,11 +17,11 @@ import static java.util.stream.Collectors.toList;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class SubredditService {
 
     private final SubredditRepository subredditRepository;
 
-    @Transactional
     public SubredditDTO createSubreddit(SubredditDTO subredditDTO) {
         SubredditEntity subreddit = SubredditEntity.builder()
                 .subredditName(subredditDTO.getName())
@@ -41,7 +43,15 @@ public class SubredditService {
         return SubredditDTO.builder()
                 .name(subredditEntity.getSubredditName())
                 .id(subredditEntity.getSubredditId())
+                .description(subredditEntity.getSubredditDescription())
                 .postTotalNumber(subredditEntity.getSubredditPosts().size())
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public SubredditDTO getSubredditById(Long id) {
+        SubredditEntity subreddit = subredditRepository.findById(id).orElseThrow(() ->
+                new SubredditNotFoundException("No subreddit found with id: " + id));
+        return mapSubredditEntityToDTO(subreddit);
     }
 }

@@ -15,7 +15,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class AuthService {
 
     private final PasswordEncoder passwordEncoder;
@@ -34,7 +37,6 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
 
-    @Transactional
     public void createUser(SignupRequestDTO signupRequestDTO) {
         UserEntity user = new UserEntity();
         user.setUsername(signupRequestDTO.getUsername());
@@ -50,6 +52,14 @@ public class AuthService {
         mailService.sendMail(new NotificationEmail("Activate your account",
                 user.getEmail(), "Click on the following link to activate your account: " +
                 "http://localhost:8080/api/auth/verify/" + token));
+    }
+
+    @Transactional(readOnly = true)
+    public UserEntity getCurrentUser() {
+        Jwt principal = (Jwt) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
+        return userRepository.findByUsername(principal.getSubject())
+                .orElseThrow(() -> new UsernameNotFoundException("No user found with username: " + principal.getSubject()));
     }
 
     private String generateVerificationToken(UserEntity user) {
@@ -72,7 +82,6 @@ public class AuthService {
         fetchUserAndEnableAccount(verificationToken.get());
     }
 
-    @Transactional
     public void fetchUserAndEnableAccount(VerificationTokenEntity verificationToken) {
         String username = verificationToken.getUser().getUsername();
 
